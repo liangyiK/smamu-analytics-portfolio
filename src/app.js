@@ -79,29 +79,47 @@
 
   // Monthly line chart as inline SVG, followed by an expandable table of the same values.
   // The month axis is clipped to the case's data window so a wide filter adds no empty years.
+  // A first or last month the window only partly covers is drawn dashed with a hollow point,
+  // so a one-day month does not read as a sales collapse.
   function trend(rows, f, metric) {
     const values = new Map(C.group(rows, r => r.date.slice(0, 7), metric).map(r => [r.name, r.value]));
     const base = defaults(view[0]);
-    const data = months(f.start > base.start ? f.start : base.start, f.end < base.end ? f.end : base.end)
-      .map(m => ({ name: m, value: values.get(m) || 0 }));
+    const from = f.start > base.start ? f.start : base.start, to = f.end < base.end ? f.end : base.end;
+    const data = months(from, to).map(m => {
+      const total = new Date(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 0)).getUTCDate();
+      const first = m === from.slice(0, 7) ? +from.slice(8) : 1, last = m === to.slice(0, 7) ? +to.slice(8) : total;
+      return { name: m, value: values.get(m) || 0, days: last - first + 1, total };
+    });
+    const partial = data.map(r => r.days < r.total), n = data.length;
+    const label = r => r.days < r.total ? `${r.name}（${r.days}／${r.total} 天）` : r.name;
     const max = Math.max(...data.map(r => r.value), 1), w = 600, h = 218, left = 62, bottom = 183;
-    const step = data.length > 1 ? 518 / (data.length - 1) : 0;
+    const step = n > 1 ? 518 / (n - 1) : 0;
     const points = data.map((r, i) => [left + i * step, bottom - r.value / max * 145]);
+    const line = (a, b, cls) => `<polyline class="${cls}" points="${points.slice(a, b + 1).map(p => p.join(',')).join(' ')}"/>`;
     let s = `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="月份趨勢圖，下方可展開數值表">`;
     for (let i = 0; i < 4; i++) {
       const y = bottom - 145 * i / 3;
       s += `<line class="gridline" x1="${left}" x2="585" y1="${y}" y2="${y}"/>` +
         `<text x="52" y="${y + 3}" text-anchor="end">${num(max * i / 3 / ((max > 1000000) ? 10000 : 1))}${max > 1000000 ? '萬' : ''}</text>`;
     }
-    s += `<polyline class="trendline" points="${points.map(p => p.join(',')).join(' ')}"/>`;
+    // Only the first and last months can be partial: solid between them, dashed into them.
+    const a = partial[0] ? 1 : 0, b = partial[n - 1] ? n - 2 : n - 1;
+    if (b > a) s += line(a, b, 'trendline');
+    for (let i = 0; i < n - 1; i++) if (partial[i] || partial[i + 1]) s += line(i, i + 1, 'trendline partial');
     data.forEach((r, i) => {
       const [x, y] = points[i];
-      s += `<circle cx="${x}" cy="${y}" r="3" fill="#895365"><title>${r.name}: ${num(r.value)}</title></circle>`;
-      if (i === 0 || i === data.length - 1 || i % Math.ceil(data.length / 5) === 0)
+      s += partial[i]
+        ? `<circle cx="${x}" cy="${y}" r="3.5" fill="#fff" stroke="#895365" stroke-width="1.5"><title>${label(r)}: ${num(r.value)}</title></circle>`
+        : `<circle cx="${x}" cy="${y}" r="3" fill="#895365"><title>${r.name}: ${num(r.value)}</title></circle>`;
+      if (i === 0 || i === n - 1 || i % Math.ceil(n / 5) === 0)
         s += `<text x="${x}" y="207" text-anchor="middle">${r.name.slice(2)}</text>`;
     });
-    return s + '</svg><details><summary class="sub">查看每月數值</summary>' +
-      table(['月份', metric ? '商品金額 TWD' : '文章數'], data.map(r => [r.name, num(r.value)])) +
+    s += '</svg>';
+    const cut = data.filter(r => r.days < r.total);
+    if (cut.length)
+      s += `<p class="sub">虛線與空心點為不完整月份（${cut.map(r => `${r.name} 含 ${r.days}／${r.total} 天`).join('、')}），不能直接與完整月份比較。</p>`;
+    return s + '<details><summary class="sub">查看每月數值</summary>' +
+      table(['月份', metric ? '商品金額 TWD' : '文章數'], data.map(r => [label(r), num(r.value)])) +
       '</details>';
   }
 

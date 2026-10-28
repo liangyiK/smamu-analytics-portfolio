@@ -11,7 +11,7 @@
 - **電商（虛構資料）：** 5,574 張完成訂單的商品貢獻與 RFM 分群。前三商品占 64.4% 金額、只占 32.3% 件數；拆開單價與數量後，金額集中主要來自高單價，不能直接解讀為需求更強。
 - **社群（PTT／Dcard 10,373 篇）：** SnowNLP＋詞典判讀情感、LDA 聚合主題，再針對底妝與保養各完整閱讀 24 篇抽樣文章，整理出可驗證的選購障礙假設，並寫好對應的試驗設計（主指標、分母、護欄、反證）。
 - **先檢查資料品質再下結論：** PTT 網址時間與日期欄 5,690／5,690 篇不同日，因此撤下社群月趨勢，不用有疑慮的日期推論成長或季節性。
-- **可重現：** 單一 HTML、無需安裝即可離線開啟；18 項回歸測試與一支重算腳本，核對頁面上的關鍵數字。
+- **可重現：** 單一 HTML、無需安裝即可離線開啟；19 項回歸測試與一支重算腳本，核對頁面上的關鍵數字。
 
 ## 展示的能力
 
@@ -96,7 +96,7 @@ PTT／Dcard 歷史文章經去重與品牌規則篩選後共 10,373 篇（PTT 5,
 | `scripts/build.py` | 由 `src/` 重建 Demo，只需 Python 標準函式庫 |
 | `scripts/analyze_findings.py` | 重算商品集中度、多品牌篇數與 RFM 彙總 |
 | `research/` | 兩個深入案例的抽樣方法、逐篇摘要、反例與驗證設計 |
-| `tests/` | 訂單去重、分母、篩選、固定 RFM 與日期警示等 18 項回歸測試 |
+| `tests/` | 訂單去重、分母、篩選、固定 RFM、日期警示與不完整月份等 19 項回歸測試 |
 | `assets/` | README 截圖 |
 
 ## 本機執行
@@ -120,7 +120,7 @@ SMAmu is a business and data analytics portfolio with two interactive case studi
 - **E-commerce (synthetic data):** product contribution and RFM segmentation over 5,574 completed orders. The top three products make up 64.4% of sales but only 32.3% of units, so the concentration comes from price, not stronger demand. Each finding comes with the extra data a real decision would need.
 - **Social listening (10,373 PTT/Dcard posts, 12 beauty brands):** sentiment (SnowNLP plus a lexicon) and LDA topics, followed by close reading of 24 sampled posts each on foundation and skincare purchase questions. Each study ends with a randomized test design that sets the primary metric, denominator and guardrails in advance.
 - **Data quality first:** the monthly trend was withdrawn after PTT URL timestamps disagreed with the date field on all 5,690 PTT posts.
-- **Reproducible:** 18 regression tests and a script that recomputes the key figures from the public snapshot.
+- **Reproducible:** 19 regression tests and a script that recomputes the key figures from the public snapshot.
 
 The e-commerce data is fictional. Social findings are exploratory, AI-assisted and not yet human-validated, and no raw posts or identifiers are published.
 
